@@ -26,15 +26,15 @@ import matplotlib.dates as mdates
 import pymannkendall as mk
 from scipy.stats import linregress
 
+from pathlib import Path
+fig_dir = Path("figures")
+fig_dir.mkdir(parents=True, exist_ok=True)
 
 # PATHS
-IF_PATH = "C:/GCAM/Theo/IAM-FIRE/zenodo"
+IF_PATH = "IAM-FIRE_projections"
 inputs_dir = os.path.join(IF_PATH, f"inputs/")
 outputs_dir = os.path.join(IF_PATH, f"outputs/")
 figures_dir = os.path.join(IF_PATH, f"figures/")
-
-# # DEBUG
-# outputs_dir = "C:/GCAM/Theo/IAM-FIRE/output/fire_impacts"
 
 # INPUTS TO CREATE BACE FIGURES
 landmask = xr.open_dataset(os.path.join(inputs_dir, "landseamask_no-ant.nc")).drop_vars("time").sel(time=0)

@@ -24,15 +24,19 @@ import seaborn as sns
 import pymannkendall as mk
 from scipy.stats import linregress
 
-# CONSTANTS
-scenarios = ["SSP1-2p6o", "SSP2-4p5", "SSP3-6p6", "SSP5-7p6"]
-esms = ["MPI-ESM1-2-LR", "CanESM5"]   
+from pathlib import Path
+fig_dir = Path("figures")
+fig_dir.mkdir(parents=True, exist_ok=True)
 
 # PATHS
-IF_PATH = "C:/GCAM/Theo/IAM-FIRE/zenodo"
+IF_PATH = "IAM-FIRE_projections"
 inputs_dir = os.path.join(IF_PATH, f"inputs/")
 outputs_dir = os.path.join(IF_PATH, f"outputs/")
 figures_dir = os.path.join(IF_PATH, f"figures/")
+
+# SCENARIOS & ESMS
+scenarios = ["SSP1-2p6o", "SSP2-4p5", "SSP3-6p6", "SSP5-7p6"]
+esms = ["MPI-ESM1-2-LR", "CanESM5"]   
 
 # INPUTS
 iamfire_results = pd.read_csv(os.path.join(outputs_dir, "BA_CE_Prediction_AllScen.csv"))

@@ -20,19 +20,23 @@ import seaborn as sns
 import matplotlib.colors as mcolors
 import cartopy.crs as ccrs
 
-# CONSTANTS
-start_year = 2002
-end_year = 2019
-dates_obs = slice(f"{start_year}-01-31", f"{end_year}-12-31")
-dates_obs_df = pd.date_range(start=f"{start_year}-01-01", end=f"{end_year}-12-31", freq='YE')  # 'ME' means Month Start
-dates_sim = pd.date_range(start=f"2020-01-31", end=f"2100-12-31", freq='YE')  # 'ME' means Month Start
-variable = ['tas', 'pr', 'hurs', "sfcWind", "rsds"]
+from pathlib import Path
+fig_dir = Path("figures")
+fig_dir.mkdir(parents=True, exist_ok=True)  
 
 # PATHS
 IF_PATH = "C:/GCAM/Theo/IAM-FIRE/zenodo"
 inputs_dir = os.path.join(IF_PATH, f"inputs/")
 outputs_dir = os.path.join(IF_PATH, f"outputs/")
 figures_dir = os.path.join(IF_PATH, f"figures/")
+
+# PARAMETERS
+start_year = 2002
+end_year = 2019
+dates_obs = slice(f"{start_year}-01-31", f"{end_year}-12-31")
+dates_obs_df = pd.date_range(start=f"{start_year}-01-01", end=f"{end_year}-12-31", freq='YE')  # 'ME' means Month Start
+dates_sim = pd.date_range(start=f"2020-01-31", end=f"2100-12-31", freq='YE')  # 'ME' means Month Start
+variable = ['tas', 'pr', 'hurs', "sfcWind", "rsds"]
 
 # INPUTS TO CREATE GLM FIGURES
 landmask = xr.open_dataset(os.path.join(inputs_dir, "landseamask_no-ant.nc")).drop_vars("time").sel(time=0)
