@@ -3,11 +3,6 @@
 Created on Wed Feb 12 14:39:22 2025
 
 @author: theo.rouhette
-
-conda activate xesmf
-cd C:\\GCAM\\Theo\\GCAM_7.2_Impacts\\python\climate_integration_metarepo\\code\\python
-python glm_figures.py
-
 """
 
 # Importing Needed Libraries
@@ -20,12 +15,9 @@ import seaborn as sns
 import matplotlib.colors as mcolors
 import cartopy.crs as ccrs
 
-from pathlib import Path
-fig_dir = Path("figures")
-fig_dir.mkdir(parents=True, exist_ok=True)  
 
 # PATHS
-IF_PATH = "C:/GCAM/Theo/IAM-FIRE/zenodo"
+IF_PATH = "C:/GCAM/Theo/zenodo/"
 inputs_dir = os.path.join(IF_PATH, f"inputs/")
 outputs_dir = os.path.join(IF_PATH, f"outputs/")
 figures_dir = os.path.join(IF_PATH, f"figures/")
@@ -43,6 +35,8 @@ landmask = xr.open_dataset(os.path.join(inputs_dir, "landseamask_no-ant.nc")).dr
 regions = xr.open_dataset(os.path.join(inputs_dir, "GFED_Regions.nc"))
 figure_nc = xr.open_dataset(os.path.join(outputs_dir, "Predictions_NC_Annual.nc"))
 figure_csv = figure_nc.to_dataframe().reset_index()
+decomp_BA_drivers = pd.read_csv(os.path.join(outputs_dir, f"BA_Factorial_Decomp_Drivers_Agg_HistGLM.csv"))
+decomp_BA_limits = pd.read_csv(os.path.join(outputs_dir, f"BA_Factorial_Decomp_LimitingF_Agg_HistGLM.csv"))
 
 # Function to calculate grid cell area in km²
 def grid_cell_area(lat, dlon=0.5, dlat=0.5):
@@ -126,15 +120,24 @@ agg_df = df_sum_time.groupby("basisregions")[
      "CE_total_C", f"CE_total_C_pred_{fc_source}", "CE_for_C", f"CE_for_C_pred_{fc_source}"]
 ].mean().reset_index()
 
-print(agg_df.head())
-
 # Map region names
 agg_df["region_name"] = agg_df["basisregions"].astype(int).map(lambda x: region_name[x][0])
+
+# 1. Calculate the sum for all numeric columns
+total_row = agg_df.sum(numeric_only=True)
+
+# 2. Assign a name for the index column so it doesn't return NaN
+total_row["basisregions"] = "Total"
+
+# 3. Append the total row to the bottom of the DataFrame
+agg_df.loc[len(agg_df)] = total_row
+
+print(agg_df.head())
 
 # Save
 save = True
 if save == True:
-    agg_df.to_csv(os.path.join(outputs_dir, "F3_Predictions_CSV_Regions_2001-2019_v5.1.csv"))
+    agg_df.to_csv(os.path.join(outputs_dir, "F3_Predictions_CSV_Regions_2001-2019.csv"))
 
     
 def F3_glm_figure(figure_nc, figure_csv, agg_df, save = True):
@@ -201,9 +204,10 @@ def F3_glm_figure(figure_nc, figure_csv, agg_df, save = True):
     # MK test
     mk_obs = mk.original_test(y_obs)
     mk_pred = mk.original_test(y_pred)
-    ax1.text(0.03, 0.15, f"Observed MK: {mk_obs.trend}", transform=ax1.transAxes,
+    
+    ax1.text(0.03, 0.15, f"Obs. MK: {mk_obs.trend} (slope: {mk_obs.slope:.2f})", transform=ax1.transAxes,
              fontsize=8)
-    ax1.text(0.03, 0.05, f"Predicted MK: {mk_pred.trend}", transform=ax1.transAxes,
+    ax1.text(0.03, 0.05, f"Pred. MK: {mk_pred.trend} (slope: {mk_pred.slope:.2f})", transform=ax1.transAxes,
              fontsize=8)
     
     # # Regression annotation
@@ -245,9 +249,9 @@ def F3_glm_figure(figure_nc, figure_csv, agg_df, save = True):
     # MK test
     mk_obs = mk.original_test(y_obs)
     mk_pred = mk.original_test(y_pred)
-    ax3.text(0.03, 0.15, f"Observed MK: {mk_obs.trend}", transform=ax3.transAxes,
+    ax3.text(0.03, 0.90, f"Obs. MK: {mk_obs.trend} (slope: {mk_obs.slope:.2f})", transform=ax3.transAxes,
              fontsize=8)
-    ax3.text(0.03, 0.05, f"Predicted MK: {mk_pred.trend}", transform=ax3.transAxes,
+    ax3.text(0.03, 0.80, f"Pred. MK: {mk_pred.trend} (slope: {mk_pred.slope:.2f})", transform=ax3.transAxes,
              fontsize=8)
     
     # # Regression annotation
@@ -291,9 +295,9 @@ def F3_glm_figure(figure_nc, figure_csv, agg_df, save = True):
     # MK test
     mk_obs = mk.original_test(y_obs)
     mk_pred = mk.original_test(y_pred)
-    ax5.text(0.03, 0.15, f"Observed MK: {mk_obs.trend}", transform=ax5.transAxes,
+    ax5.text(0.03, 0.90, f"Obs. MK: {mk_obs.trend} (slope: {mk_obs.slope:.2f})", transform=ax5.transAxes,
              fontsize=8)
-    ax5.text(0.03, 0.05, f"Predicted MK: {mk_pred.trend}", transform=ax5.transAxes,
+    ax5.text(0.03, 0.80, f"Pred. MK: {mk_pred.trend} (slope: {mk_pred.slope:.2f})", transform=ax5.transAxes,
              fontsize=8)
     
     # # Regression annotation
@@ -338,9 +342,9 @@ def F3_glm_figure(figure_nc, figure_csv, agg_df, save = True):
     # MK test
     mk_obs = mk.original_test(y_obs)
     mk_pred = mk.original_test(y_pred)
-    ax7.text(0.03, 0.15, f"Observed MK: {mk_obs.trend}", transform=ax7.transAxes,
+    ax7.text(0.03, 0.90, f"Obs. MK: {mk_obs.trend} (slope: {mk_obs.slope:.2f})", transform=ax7.transAxes,
              fontsize=8)
-    ax7.text(0.03, 0.05, f"Predicted MK: {mk_pred.trend}", transform=ax7.transAxes,
+    ax7.text(0.03, 0.80, f"Pred. MK: {mk_pred.trend} (slope: {mk_pred.slope:.2f})", transform=ax7.transAxes,
              fontsize=8)
     
     # # Regression annotation
@@ -416,8 +420,9 @@ def F3_glm_figure(figure_nc, figure_csv, agg_df, save = True):
     plt.show()
     
     if save == True:
-        glm_figure.savefig(os.path.join(figures_dir, "F3_BA_Prediction_Observed_2019_FINAL_v5.1.png"))
+        glm_figure.savefig(os.path.join(figures_dir, "F3_BA_Prediction_Observed.png"))
     
+
 def F4_glm_maps(figure_nc, figure_reset, mean = True, year = 2016, save = True):
     
 
@@ -579,9 +584,9 @@ def F4_glm_maps(figure_nc, figure_reset, mean = True, year = 2016, save = True):
     
     if save == True: 
         if mean == True: 
-            glm_figure.savefig(os.path.join(figures_dir, f"F4_BA_Prediction_Observed_MAPS_LAT_MEAN_v5.1.png"))
+            glm_figure.savefig(os.path.join(figures_dir, f"F4_BA_Prediction_Observed_MAPS_LAT_MEAN.png"))
         else:
-            glm_figure.savefig(os.path.join(figures_dir, f"F4_BA_Prediction_Observed_MAPS_LAT_{year}_v5.1.png"))
+            glm_figure.savefig(os.path.join(figures_dir, f"F4_BA_Prediction_Observed_MAPS_LAT_{year}.png"))
 
     import matplotlib.pyplot as plt
     import matplotlib.colors as mcolors
@@ -749,9 +754,127 @@ def F4_glm_maps(figure_nc, figure_reset, mean = True, year = 2016, save = True):
             
     if save == True: 
         if mean == True: 
-            glm_figure.savefig(os.path.join(figures_dir, f"F4_CE_Prediction_Observed_MAPS_LAT_MEAN_v5.1.png"))
+            glm_figure.savefig(os.path.join(figures_dir, f"F4_CE_Prediction_Observed_MAPS_LAT_MEAN.png"))
         else:
-            glm_figure.savefig(os.path.join(figures_dir, f"F4_CE_Prediction_Observed_MAPS_LAT_{year}_v5.1.png"))
+            glm_figure.savefig(os.path.join(figures_dir, f"F4_CE_Prediction_Observed_MAPS_LAT_{year}.png"))
+
+
+def F5_glm_fact_decomp(decomp_BA_drivers, decomp_BA_limits, save = True):
+
+
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+    import os
+    import string
+    
+    # --- 1. CONFIGURATION & COLOR PALETTE ---
+    start_year = 2002
+    end_year = 2019
+    
+    # Specific color assignments to match your reference
+    color_red = '#000000'   # Black for GFED5 Benchmark
+    color_blue = '#e31a1c'  # Blue for IAM-FIRE / Default Prediction
+    factor_colors = ['#a6cee3', '#fdbf6f', '#ff7f00', '#33a02c'] 
+    custom_colors = [color_red, color_blue] + factor_colors
+    
+    def prepare_df(df):
+        df = df.copy()
+        if 'time' in df.columns:
+            df = df.set_index("time")
+        df.index = pd.to_datetime(df.index)
+        df = df[(df.index.year >= start_year) & (df.index.year <= end_year)]
+        df.index = df.index.year
+        return df.groupby(level=0).sum()
+    
+    df_drivers = prepare_df(decomp_BA_drivers)
+    df_limits = prepare_df(decomp_BA_limits)
+    
+    # Mappings (Ensure order matches the custom_colors list)
+    mapping_drivers = {
+        'GFED5 benchmark': "BA_area",
+        'All transient (default BA)': 'BA_area_pred',
+        'Transient socioeconomic': 'BA_Free_socioeconomic',
+        'Transient land_use': 'BA_Free_land_use',
+        'Transient climate': 'BA_Free_climate',
+        'Transient vegetation': 'BA_Free_vegetation',
+    }
+    
+    mapping_limits = {
+        'GFED5 benchmark': "BA_area",
+        'All transient (default BA)': 'BA_area_pred',
+        'Fixed socioeconomic': 'BA_Fixed_socioeconomic',
+        'Fixed land_use': 'BA_Fixed_land_use',
+        'Fixed climate': 'BA_Fixed_climate',
+        'Fixed vegetation': 'BA_Fixed_vegetation',
+    }
+    
+    # --- 2. UPDATED PLOTTING FUNCTION WITH INLINE PANEL LETTERS ---
+    def plot_factorial_column(df, mapping, ax_top, ax_bottom, title_suffix, start_idx):
+        # Time Series Plot
+        for (label, col), color in zip(mapping.items(), custom_colors):
+            if col in df.columns:
+                lw = 2.5 if label in ['GFED5 benchmark', 'All transient (default BA)'] else 1.5
+                ax_top.plot(df.index, df[col], label=label, color=color, linewidth=lw)
+        
+        # Inline Panel Letter in Title
+        letter_top = string.ascii_lowercase[start_idx]
+        ax_top.set_title(f"({letter_top}) Burned Area Trends: {title_suffix}", loc='left')
+        
+        ax_top.set_ylabel("Burned Area (Mha)")
+        ax_top.set_ylim(525, 875)
+        ax_top.set_xlim(start_year - 0.5, end_year + 0.5)
+        ax_top.set_xticks(np.arange(start_year, end_year + 1, 2))
+        ax_top.legend(loc='lower left', fontsize='x-small', frameon=True, facecolor='white', framealpha=0.9, ncol=2)
+        ax_top.grid(axis='y', linestyle='--', alpha=0.7)
+    
+        # Bar Chart Calculation
+        first_vals = df.iloc[0]
+        last_vals = df.iloc[-1]
+        abs_change = {label: last_vals[col] - first_vals[col] for label, col in mapping.items() if col in df.columns}
+        
+        labels = list(abs_change.keys())
+        values = list(abs_change.values())
+        y_pos = np.arange(len(labels))
+        bars = ax_bottom.barh(y_pos, values, color=custom_colors, edgecolor='white', height=0.7)
+        
+        # Inline Panel Letter in Title
+        letter_bottom = string.ascii_lowercase[start_idx + 2]
+        ax_bottom.set_title(f"({letter_bottom}) Total Change: {title_suffix}", loc='left')
+        
+        ax_bottom.axvline(0, color='black', linewidth=0.8)
+        ax_bottom.set_yticks(y_pos)
+        ax_bottom.set_yticklabels(labels)
+        ax_bottom.set_xlabel(f"Abs. change (Mha) relative to {start_year}")
+        ax_bottom.set_xlim(-200, 150)
+        ax_bottom.grid(axis='x', linestyle='--', alpha=0.5)
+    
+        # Value Annotations
+        for bar in bars:
+            width = bar.get_width()
+            x_offset = 5 if width >= 0 else -5
+            ax_bottom.annotate(f'{width:.1f}', xy=(width, bar.get_y() + bar.get_height() / 2),
+                               xytext=(x_offset, 8), textcoords="offset points",
+                               ha='left' if width >= 0 else 'right', va='bottom', fontsize=10, fontweight='bold')
+    
+    # --- 3. EXECUTION ---
+    fig, axs = plt.subplots(2, 2, figsize=(12, 8), gridspec_kw={'height_ratios': [1, 1.2]})
+    plt.subplots_adjust(hspace=0.4, wspace=0.35)
+    
+    # Left column: (a) and (c)
+    plot_factorial_column(df_drivers, mapping_drivers, axs[0, 0], axs[1, 0], "Transient (Drivers)", 0)
+    
+    # Right column: (b) and (d)
+    plot_factorial_column(df_limits, mapping_limits, axs[0, 1], axs[1, 1], "Fixed (Limiting Factors)", 1)
+    
+    plt.tight_layout()
+    if save:
+        plt.savefig(os.path.join(figures_dir, "F5_BA_FactDecomp_Final.png"), dpi=300)
+    plt.show()
+        
+
+
+
 
 def SM2_forest_proportion(figure_mean, save = True):
     ###########################################################################
@@ -799,7 +922,7 @@ def SM2_forest_proportion(figure_mean, save = True):
     
     # Save and show
     if save == True:
-        output_path = os.path.join(figures_dir, "SM2_Forest_proportion_countries_v5.1.png")
+        output_path = os.path.join(figures_dir, "SM2_Forest_proportion_countries.png")
         prop_figure.savefig(output_path)
 
 def SM4_fuel_consumption(figure_nc, save = True):
@@ -956,104 +1079,9 @@ def SM89_BA_historic_trends_reg(df_sum_time, variable = "BA_area", save = True):
     
     # Save and show
     if save == True:
-        output_path = os.path.join(figures_dir, f"SM8_Regional_Historic_{variable}_v5.1.png")
+        output_path = os.path.join(figures_dir, f"SM8_Regional_Historic_{variable}.png")
         reg_figure.savefig(output_path)
     
-def SMX_correlation_maps(figure_nc, save = True):
-    
-    figure_mean = figure_nc.sel(lat=slice(-55.25, 90)).mean(dim="time").where(landmask.mask == 1)
-
-    
-    import numpy as np
-    import matplotlib.pyplot as plt
-    import cartopy.crs as ccrs
-    import cartopy.feature as cfeature
-    import scipy.stats as stats
-    import math
-    import os
-
-    # ---- DATA PREP ----
-    # We must keep the time dimension to compute correlations over time
-    ds = figure_nc.sel(lat=slice(-55.25, 90)).where(landmask.mask == 1)
-    # figure_nc["grazing_pressure"].mean(dim="time").plot()
-    # figure_nc["TPI"].mean(dim="time").plot()
-
-    # figure_nc["grazing_pressure"].notnull().sum(dim="time").plot() 
-    
-    predictors = [
-        "vpd_log",
-        "ndd_log",
-        "ndd_season_log",
-        "sfcWind_log",
-        "pr_sum_month_log",
-        "GPP_log",
-        # "TPI",
-        # "VRM",
-        "grassland",
-        "shrubland",
-        "cropland",
-        "forest",
-        "HDI"
-        # "population",
-        # "grazing_pressure",
-        # "pop_density",
-        # "grazing_pressure"
-    ]
-
-    # ---- FIGURE LAYOUT ----
-    n = len(predictors)
-    ncols = 3
-    nrows = math.ceil(n / ncols)
-
-    fig = plt.figure(figsize=(5*ncols, 4*nrows))
-    proj = ccrs.Robinson()
-
-    # ---- LOOP OVER PREDICTORS ----
-    for i, var in enumerate(predictors, 1):
-
-        # Compute Pearson correlation over time
-        # r = cov(x,y) / (std(x)*std(y)) computed for each (lat,lon)
-        ba = ds["BA_area"]
-        x  = ds[var]
-
-        # xr.corr works beautifully across a dimension
-        rmap = xr.corr(ba, x, dim="time")
-
-        # ---- PLOT PANEL ----
-        ax = fig.add_subplot(nrows, ncols, i, projection=proj)
-        ax.set_global()
-        ax.coastlines(linewidth=0.5)
-        ax.add_feature(cfeature.BORDERS, linewidth=0.3)
-
-        # Filled map
-        pcm = rmap.plot(
-            ax=ax,
-            transform=ccrs.PlateCarree(),
-            cmap="coolwarm",
-            vmin=-1, vmax=1,
-            add_colorbar=False
-        )
-
-        ax.set_title(f"corr(BA_area, {var})", fontsize=10)
-
-    # ---- GLOBAL COLORBAR ----
-    cbar_ax = fig.add_axes([0.25, 0.06, 0.5, 0.015])
-    fig.colorbar(pcm, cax=cbar_ax, orientation="horizontal", label="Pearson r")
-
-    fig.suptitle("Pearson Correlation with BA_area (computed over time)", fontsize=18, y=0.95)
-    plt.tight_layout(rect=[0,0.08,1,0.94])
-    
-    corr_figure=plt.gcf() 
-
-
-    # ---- SAVE ----
-    if save:
-        output_path = os.path.join(figures_dir, "SM9_Correlation_Maps_BA_v5.1.png")
-        corr_figure.savefig(output_path, dpi=300)
-        print("Saved to:", output_path)
-
-    plt.show()
-
     
 
 
@@ -1064,12 +1092,12 @@ if __name__ == "__main__":
     F4_glm_maps(figure_nc, figure_csv, mean = True, year = 2003, save = True)
     F4_glm_maps(figure_nc, figure_csv, mean = False, year = 2003, save = True)
     F4_glm_maps(figure_nc, figure_csv, mean = False, year = 2016, save = True)
+    F5_glm_fact_decomp(decomp_BA_drivers, decomp_BA_limits, save = True)
 
     SM2_forest_proportion(figure_mean, save = True)
     SM4_fuel_consumption(figure_nc, save = True)
     SM89_BA_historic_trends_reg(df_sum_time, variable = "BA_area", save = True)
     SM89_BA_historic_trends_reg(df_sum_time, variable = "BA_area_for", save = True)
-    
-    SMX_correlation_maps(figure_nc, save = True)
+
     
 
